@@ -15,24 +15,25 @@ func main() {
 		log.Fatal("Failed to open file")
 	}
 
-	_, err = file.WriteString(fmt.Sprintf("P3\n%d %d\n255\n", ImageWidth, ImageHeight))
-	if err != nil {
+	if _, err := file.WriteString(
+		fmt.Sprintf("P3\n%d %d\n255\n", ImageWidth, ImageHeight)); err != nil {
 		log.Fatal("Failed to write to file")
 	}
 
 	for j := 0; j < ImageHeight; j++ {
 		log.Printf("Scanlines remaining: %d\n", ImageHeight-j)
 		for i := 0; i < ImageWidth; i++ {
-			r := float32(i) / (ImageWidth - 1)
-			g := float32(j) / (ImageHeight - 1)
-			b := float32(0)
+			pixel := Color{
+				float64(i) / (ImageWidth - 1),
+				float64(j) / (ImageHeight - 1),
+				float64(0),
+			}
 
-			ir := int(255.999 * r)
-			ig := int(255.999 * g)
-			ib := int(255.999 * b)
+			if _, err := file.WriteString(pixel.String()); err != nil {
+				log.Fatal("Failed to write to file")
+			}
 
-			_, err = file.WriteString(fmt.Sprintf("%d %d %d\n", ir, ig, ib))
-			if err != nil {
+			if _, err := file.WriteString("\n"); err != nil {
 				log.Fatal("Failed to write to file")
 			}
 		}
