@@ -24,6 +24,12 @@ func main() {
 		log.Fatal("Failed to write to file")
 	}
 
+	// World
+
+	var world HittableList
+	world.Add(Sphere{geometry.Vec{0, 0, -1}, 0.5})
+	world.Add(Sphere{geometry.Vec{0, -100.5, -1}, 100})
+
 	// Camera
 	focalLength := 1.0
 	viewportHeight := 2.0
@@ -42,13 +48,14 @@ func main() {
 	viewportUpperLeft := cameraCenter.Minus(geometry.Vec{0, 0, focalLength}, viewportU.Scale(0.5), viewportV.Scale(0.5))
 	pixel00Loc := viewportUpperLeft.Plus(pixelDeltaU.Plus(pixelDeltaV).Scale(0.5))
 
+	// Render
 	for j := 0; j < ImageHeight; j++ {
 		log.Printf("Scanlines remaining: %d\n", ImageHeight-j)
 		for i := 0; i < ImageWidth; i++ {
 			pixelCenter := pixel00Loc.Plus(pixelDeltaU.Scale(float64(i)), pixelDeltaV.Scale(float64(j)))
 			rayDir := pixelCenter.Minus(cameraCenter)
 			ray := Ray{cameraCenter, rayDir}
-			pixelColor := ray.Color()
+			pixelColor := ray.Color(world)
 
 			if _, err := file.WriteString(pixelColor.String()); err != nil {
 				log.Fatal("Failed to write to file")
