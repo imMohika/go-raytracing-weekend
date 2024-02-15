@@ -25,3 +25,23 @@ func (c Color) String() string {
 	ib := int(255.999 * c.B())
 	return fmt.Sprintf("%d %d %d", ir, ig, ib)
 }
+
+func (c Color) Scale(n float64) Color {
+	return Color{
+		c.R() * n,
+		c.G() * n,
+		c.B() * n,
+	}
+}
+
+func (c Color) Plus(colors ...Color) Color {
+	r := c.R()
+	g := c.G()
+	b := c.B()
+	for _, color := range colors {
+		r += color.R()
+		g += color.G()
+		b += color.B()
+	}
+	return Color{r, g, b}
+}

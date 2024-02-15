@@ -32,20 +32,28 @@ func (v Vec) LengthSquared() float64 {
 	return v.X()*v.X() + v.Y()*v.Y() + v.Z()*v.Z()
 }
 
-func (v Vec) Plus(other Vec) Vec {
-	return Vec{
-		v.X() + other.X(),
-		v.Y() + other.Y(),
-		v.Z() + other.Z(),
+func (v Vec) Plus(vecs ...Vec) Vec {
+	x := v.X()
+	y := v.Y()
+	z := v.Z()
+	for _, vec := range vecs {
+		x += vec.X()
+		y += vec.Y()
+		z += vec.Z()
 	}
+	return Vec{x, y, z}
 }
 
-func (v Vec) Minus(other Vec) Vec {
-	return Vec{
-		v.X() - other.X(),
-		v.Y() - other.Y(),
-		v.Z() - other.Z(),
+func (v Vec) Minus(vecs ...Vec) Vec {
+	x := v.X()
+	y := v.Y()
+	z := v.Z()
+	for _, vec := range vecs {
+		x -= vec.X()
+		y -= vec.Y()
+		z -= vec.Z()
 	}
+	return Vec{x, y, z}
 }
 
 func (v Vec) Multiply(other Vec) Vec {
@@ -82,4 +90,8 @@ func (v Vec) Cross(other Vec) Vec {
 		v.Z()*other.X() - v.X()*other.Z(),
 		v.X()*other.Y() - v.Y()*other.X(),
 	}
+}
+
+func (v Vec) Unit() Vec {
+	return v.Scale(1.0 / v.Length())
 }
