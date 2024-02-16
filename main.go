@@ -1,71 +1,24 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"raytracing-books/geometry"
 )
 
 func main() {
-	// Image
-	aspectRatio := 16.0 / 9.0
-	ImageWidth := 400
-	ImageHeight := int(float64(ImageWidth) / aspectRatio)
-
-	// File
 	file, err := os.Create("./img.ppm")
 	if err != nil {
 		log.Fatal("Failed to open file")
 	}
 
-	if _, err := file.WriteString(
-		fmt.Sprintf("P3\n%d %d\n255\n", ImageWidth, ImageHeight)); err != nil {
-		log.Fatal("Failed to write to file")
-	}
-
-	// World
-
 	var world HittableList
 	world.Add(Sphere{geometry.Vec{0, 0, -1}, 0.5})
 	world.Add(Sphere{geometry.Vec{0, -100.5, -1}, 100})
 
-	// Camera
-	focalLength := 1.0
-	viewportHeight := 2.0
-	viewportWidth := viewportHeight * (float64(ImageWidth) / float64(ImageHeight))
-	cameraCenter := geometry.Vec{0, 0, 0}
-
-	// Calculate the vectors across the horizontal and down the vertical viewport edges.
-	viewportU := geometry.Vec{viewportWidth, 0, 0}
-	viewportV := geometry.Vec{0, -viewportHeight, 0}
-
-	// Calculate the horizontal and vertical delta vectors from pixel to pixel.
-	pixelDeltaU := viewportU.Scale(1.0 / float64(ImageWidth))
-	pixelDeltaV := viewportV.Scale(1.0 / float64(ImageHeight))
-
-	// Calculate the location of the upper left pixel.
-	viewportUpperLeft := cameraCenter.Minus(geometry.Vec{0, 0, focalLength}, viewportU.Scale(0.5), viewportV.Scale(0.5))
-	pixel00Loc := viewportUpperLeft.Plus(pixelDeltaU.Plus(pixelDeltaV).Scale(0.5))
-
-	// Render
-	for j := 0; j < ImageHeight; j++ {
-		log.Printf("Scanlines remaining: %d\n", ImageHeight-j)
-		for i := 0; i < ImageWidth; i++ {
-			pixelCenter := pixel00Loc.Plus(pixelDeltaU.Scale(float64(i)), pixelDeltaV.Scale(float64(j)))
-			rayDir := pixelCenter.Minus(cameraCenter)
-			ray := Ray{cameraCenter, rayDir}
-			pixelColor := ray.Color(world)
-
-			if _, err := file.WriteString(pixelColor.String()); err != nil {
-				log.Fatal("Failed to write to file")
-			}
-
-			if _, err := file.WriteString("\n"); err != nil {
-				log.Fatal("Failed to write to file")
-			}
-		}
-	}
+	frame := NewFrame(400, 16/9)
+	cam := NewCamera(frame)
+	cam.Render(file, world)
 
 	log.Println("Done.")
 }
