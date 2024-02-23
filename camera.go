@@ -4,18 +4,20 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"raytracing-books/geometry"
 )
 
 type Camera struct {
 	frame       Frame
+	samples     int
 	center      geometry.Vec
 	pixelDeltaU geometry.Vec
 	pixelDeltaV geometry.Vec
 	pixel00Loc  geometry.Vec
 }
 
-func NewCamera(frame Frame) Camera {
+func NewCamera(frame Frame, samples int) Camera {
 	center := geometry.Vec{0, 0, 0}
 
 	// Determine viewport dimensions.
@@ -37,6 +39,7 @@ func NewCamera(frame Frame) Camera {
 
 	return Camera{
 		frame,
+		samples,
 		center,
 		pixelDeltaU,
 		pixelDeltaV,
@@ -53,12 +56,13 @@ func (c Camera) Render(f io.StringWriter, world HittableList) {
 	for j := 0; j < c.frame.height; j++ {
 		log.Printf("Scanlines remaining: %d\n", c.frame.height-j)
 		for i := 0; i < c.frame.width; i++ {
-			pixelCenter := c.pixel00Loc.Plus(c.pixelDeltaU.Scale(float64(i)), c.pixelDeltaV.Scale(float64(j)))
-			rayDir := pixelCenter.Minus(c.center)
-			ray := Ray{c.center, rayDir}
-			pixelColor := ray.Color(world)
+			pixelColor := Color{0, 0, 0}
+			for s := 0; s < c.samples; s++ {
+				r := c.getRay(i, j)
+				pixelColor = pixelColor.Plus(r.Color(world))
+			}
 
-			if _, err := f.WriteString(pixelColor.String()); err != nil {
+			if _, err := f.WriteString(pixelColor.String(c.samples)); err != nil {
 				log.Fatal("Failed to write to file")
 			}
 
@@ -67,4 +71,18 @@ func (c Camera) Render(f io.StringWriter, world HittableList) {
 			}
 		}
 	}
+}
+
+func (c Camera) getRay(i int, j int) Ray {
+	pixelCenter := c.pixel00Loc.Plus(c.pixelDeltaU.Scale(float64(i)), c.pixelDeltaV.Scale(float64(j)))
+	pixelSample := pixelCenter.Plus(c.sampleSquare())
+
+	rayDir := pixelSample.Minus(c.center)
+	return Ray{c.center, rayDir}
+}
+
+func (c Camera) sampleSquare() geometry.Vec {
+	px := -0.5 + rand.Float64()
+	py := -0.5 + rand.Float64()
+	return c.pixelDeltaU.Scale(px).Plus(c.pixelDeltaV.Scale(py))
 }
