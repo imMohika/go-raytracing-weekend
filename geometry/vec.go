@@ -143,3 +143,10 @@ func (v Vec) NearZero() bool {
 func Reflect(v, n Vec) Vec {
 	return v.Minus(n.Scale(2.0 * v.Dot(n)))
 }
+
+func Refract(uv, n Vec, etai float64) Vec {
+	cos := math.Min(uv.Inverse().Dot(n), 1.0)
+	outPrep := n.Scale(cos).Plus(uv).Scale(etai)
+	outParallel := n.Scale(-math.Sqrt(math.Abs(1.0 - outPrep.LengthSquared())))
+	return outPrep.Plus(outParallel)
+}
