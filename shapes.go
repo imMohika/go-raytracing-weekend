@@ -30,27 +30,24 @@ func (i Interval) Clamp(x float64) float64 {
 type HitRecord struct {
 	p         geometry.Vec
 	normal    geometry.Vec
+	mat       Material
 	t         float64
 	frontFace bool
 }
 
-// NOTE: the parameter `outwardNormal` is assumed to have unit length.
-func MakeHitRecord(r Ray, p geometry.Vec, t float64, outwardNormal geometry.Vec) HitRecord {
+// MakeHitRecord NOTE: the parameter `outwardNormal` is assumed to have unit length.
+func MakeHitRecord(r Ray, p geometry.Vec, mat Material, t float64, outwardNormal geometry.Vec) HitRecord {
+	n := outwardNormal.Inverse()
 	if r.Dir().Dot(outwardNormal) < 0 {
 		// Front face
-		return HitRecord{
-			p,
-			outwardNormal,
-			t,
-			true,
-		}
-	} else {
-		return HitRecord{
-			p,
-			outwardNormal.Inverse(),
-			t,
-			false,
-		}
+		n = outwardNormal
+	}
+	return HitRecord{
+		p,
+		n,
+		mat,
+		t,
+		true,
 	}
 }
 
@@ -61,6 +58,7 @@ type Hittable interface {
 type Sphere struct {
 	center geometry.Vec
 	radius float64
+	mat    Material
 }
 
 func (s Sphere) Hit(r Ray, t Interval) *HitRecord {
@@ -86,6 +84,6 @@ func (s Sphere) Hit(r Ray, t Interval) *HitRecord {
 
 	p := r.At(root)
 	outwardNormal := p.Minus(s.center).Scale(1.0 / s.radius).Unit()
-	rec := MakeHitRecord(r, p, root, outwardNormal)
+	rec := MakeHitRecord(r, p, s.mat, root, outwardNormal)
 	return &rec
 }

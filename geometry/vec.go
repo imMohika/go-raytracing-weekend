@@ -1,6 +1,9 @@
 package geometry
 
-import "math"
+import (
+	"math"
+	"math/rand"
+)
 
 type Vec [3]float64
 
@@ -94,4 +97,49 @@ func (v Vec) Cross(other Vec) Vec {
 
 func (v Vec) Unit() Vec {
 	return v.Scale(1.0 / v.Length())
+}
+
+func RandVec() Vec {
+	return Vec{rand.Float64(), rand.Float64(), rand.Float64()}
+}
+
+func RandBoundedVec(min, max float64) Vec {
+	return Vec{
+		min + (max-min)*rand.Float64(),
+		min + (max-min)*rand.Float64(),
+		min + (max-min)*rand.Float64(),
+	}
+}
+
+func RandVecInUnitSphere() Vec {
+	for {
+		p := RandBoundedVec(-1, 1)
+		if p.LengthSquared() < 1.0 {
+			return p
+		}
+	}
+}
+
+func RandUnitVec() Vec {
+	return RandVecInUnitSphere().Unit()
+}
+
+func RandVecOnHemisphere(normal Vec) Vec {
+	onSphere := RandUnitVec()
+	if onSphere.Dot(normal) > 0.0 {
+		// In the same hemisphere as the normal
+		return onSphere
+	}
+
+	return onSphere.Inverse()
+}
+
+func (v Vec) NearZero() bool {
+	// Return true if the vector is close to zero in all dimensions.
+	z := 1e-8
+	return (math.Abs(v.X()) < z) && (math.Abs(v.Y()) < z) && (math.Abs(v.Z()) < z)
+}
+
+func Reflect(v, n Vec) Vec {
+	return v.Minus(n.Scale(2.0 * v.Dot(n)))
 }

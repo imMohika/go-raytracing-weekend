@@ -11,13 +11,14 @@ import (
 type Camera struct {
 	frame       Frame
 	samples     int
+	depth       int
 	center      geometry.Vec
 	pixelDeltaU geometry.Vec
 	pixelDeltaV geometry.Vec
 	pixel00Loc  geometry.Vec
 }
 
-func NewCamera(frame Frame, samples int) Camera {
+func NewCamera(frame Frame, samples, depth int) Camera {
 	center := geometry.Vec{0, 0, 0}
 
 	// Determine viewport dimensions.
@@ -40,6 +41,7 @@ func NewCamera(frame Frame, samples int) Camera {
 	return Camera{
 		frame,
 		samples,
+		depth,
 		center,
 		pixelDeltaU,
 		pixelDeltaV,
@@ -59,7 +61,9 @@ func (c Camera) Render(f io.StringWriter, world HittableList) {
 			pixelColor := Color{0, 0, 0}
 			for s := 0; s < c.samples; s++ {
 				r := c.getRay(i, j)
-				pixelColor = pixelColor.Plus(r.Color(world))
+				clr := r.Color(world, c.depth)
+				//log.Println(pixelColor, clr)
+				pixelColor = pixelColor.Plus(clr)
 			}
 
 			if _, err := f.WriteString(pixelColor.String(c.samples)); err != nil {
