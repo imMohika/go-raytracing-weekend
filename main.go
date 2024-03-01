@@ -25,7 +25,7 @@ func main() {
 	world.Add(Sphere{geometry.Vec{1, 0, -1}, 0.5, matRight})
 
 	frame := NewFrame(200, 16/9)
-	cam := NewCamera(frame, 100, 10)
+	cam := NewCamera(frame, 100, 10, 20, geometry.Vec{-2, 2, 1}, geometry.Vec{0, 0, -1}, geometry.Vec{0, 1, 0})
 	cam.Render(file, world)
 
 	log.Println("Done.")

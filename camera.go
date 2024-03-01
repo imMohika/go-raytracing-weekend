@@ -4,38 +4,46 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"math/rand"
 	"raytracing-books/geometry"
 )
 
 type Camera struct {
 	frame       Frame
-	samples     int
-	depth       int
+	samples     int // Count of random samples for each pixel
+	depth       int // Maximum number of ray bounces into scene
 	center      geometry.Vec
 	pixelDeltaU geometry.Vec
 	pixelDeltaV geometry.Vec
 	pixel00Loc  geometry.Vec
 }
 
-func NewCamera(frame Frame, samples, depth int) Camera {
-	center := geometry.Vec{0, 0, 0}
+func NewCamera(frame Frame, samples, depth int, vfov float64, lookFrom, lookAt, vup geometry.Vec) Camera {
+	center := lookFrom
 
 	// Determine viewport dimensions.
-	focalLength := 1.0
-	viewportHeight := 2.0
+	focalLength := lookFrom.Minus(lookAt).Length()
+	theta := vfov * math.Pi / 180
+	h := math.Tan(theta / 2.0)
+	viewportHeight := 2.0 * h * focalLength
 	viewportWidth := viewportHeight * (float64(frame.width) / float64(frame.height))
 
+	// Calculate the u,v,w unit basis vectors for the camera coordinate frame.
+	w := lookFrom.Minus(lookAt).Unit()
+	u := vup.Cross(w).Unit()
+	v := w.Cross(u)
+
 	// Calculate the vectors across the horizontal and down the vertical viewport edges.
-	viewportU := geometry.Vec{viewportWidth, 0, 0}
-	viewportV := geometry.Vec{0, -viewportHeight, 0}
+	viewportU := u.Scale(viewportWidth)
+	viewportV := v.Inverse().Scale(viewportHeight)
 
 	// Calculate the horizontal and vertical delta vectors from pixel to pixel.
 	pixelDeltaU := viewportU.Scale(1.0 / float64(frame.width))
 	pixelDeltaV := viewportV.Scale(1.0 / float64(frame.height))
 
 	// Calculate the location of the upper left pixel.
-	viewportUpperLeft := center.Minus(geometry.Vec{0, 0, focalLength}, viewportU.Scale(0.5), viewportV.Scale(0.5))
+	viewportUpperLeft := center.Minus(w.Scale(focalLength), viewportU.Scale(0.5), viewportV.Scale(0.5))
 	pixel00Loc := viewportUpperLeft.Plus(pixelDeltaU.Plus(pixelDeltaV).Scale(0.5))
 
 	return Camera{
